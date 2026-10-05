@@ -67,6 +67,7 @@ import (
 	motdservice "github.com/portainer/portainer/api/motd"
 	"github.com/portainer/portainer/api/pendingactions"
 	"github.com/portainer/portainer/api/platform"
+	"github.com/portainer/portainer/api/scheduler"
 	"github.com/portainer/portainer/api/stacks/deployments"
 	"github.com/portainer/portainer/api/stacks/teardown"
 	libhelmtypes "github.com/portainer/portainer/pkg/libhelm/types"
@@ -107,6 +108,7 @@ type Server struct {
 	KubernetesDeployer          portainer.KubernetesDeployer
 	HelmPackageManager          libhelmtypes.HelmPackageManager
 	SourceScheduler             *scheduling.SourceScheduler
+	BackupScheduler             *scheduler.Scheduler
 	ShutdownTrigger             context.CancelFunc
 	StackDeployer               deployments.StackDeployer
 	UpgradeService              upgrade.Service
@@ -151,6 +153,7 @@ func (server *Server) Start(ctx context.Context) error {
 		server.FileService.GetDatastorePath(),
 		server.ShutdownTrigger,
 		adminMonitor,
+		server.BackupScheduler,
 	)
 	backupHandler.SetupToken = server.SetupToken
 

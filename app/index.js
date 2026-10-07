@@ -73,13 +73,15 @@ angular
   .run(onStartupAngular)
   .config(configApp);
 
-if (typeof require === 'function' && require.context) {
+// Webpack rewrites require.context(...) at build time. Do not gate on
+// `require.context` as a runtime property — that skips the entire walk.
+if (require) {
   const req = require.context('./', true, /^(?!.*\.test\.js$).*\.js$/im);
   req.keys().forEach(function (key) {
     try {
       req(key);
     } catch (err) {
-      // One broken legacy file must not skip the rest (e.g. vendors / controllers).
+      // One broken legacy file must not skip the rest (e.g. oauth / controllers).
       // eslint-disable-next-line no-console
       console.error('Failed to load module via require.context:', key, err);
     }

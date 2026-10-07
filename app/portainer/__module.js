@@ -1,6 +1,7 @@
 import featureFlagModule from '@/react/portainer/feature-flags';
 
 import './rbac';
+import './oauth/__module';
 
 import componentsModule from './components';
 import settingsModule from './settings';

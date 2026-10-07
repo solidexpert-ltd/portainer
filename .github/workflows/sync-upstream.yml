@@ -1,0 +1,104 @@
+name: Sync upstream Portainer
+
+on:
+  schedule:
+    # Check upstream every weekday morning (UTC).
+    - cron: "0 6 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Fetch upstream/develop into develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add and fetch upstream
+        run: |
+          git remote add upstream https://github.com/portainer/portainer.git
+          git fetch upstream develop --tags
+
+      - name: Detect upstream changes
+        id: status
+        shell: bash
+        run: |
+          BEHIND="$(git rev-list --count HEAD..upstream/develop)"
+          AHEAD="$(git rev-list --count upstream/develop..HEAD)"
+          UPSTREAM_SHA="$(git rev-parse --short upstream/develop)"
+          {
+            echo "behind=${BEHIND}"
+            echo "ahead=${AHEAD}"
+            echo "upstream_sha=${UPSTREAM_SHA}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Local develop is ${BEHIND} commit(s) behind and ${AHEAD} commit(s) ahead of upstream/develop (${UPSTREAM_SHA})."
+
+      - name: Fast-forward develop when possible
+        if: steps.status.outputs.behind != '0' && steps.status.outputs.ahead == '0'
+        run: |
+          git merge --ff-only upstream/develop
+          git push origin develop
+          echo "Fast-forwarded develop to upstream/develop (${{ steps.status.outputs.upstream_sha }})."
+
+      - name: Open sync PR when fork has local commits
+        if: steps.status.outputs.behind != '0' && steps.status.outputs.ahead != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          BRANCH="sync/upstream-${{ steps.status.outputs.upstream_sha }}"
+          if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+            echo "Sync branch ${BRANCH} already exists on origin; skipping."
+            exit 0
+          fi
+
+          git checkout -B "${BRANCH}"
+          if git merge --no-edit upstream/develop; then
+            git push -u origin "${BRANCH}"
+            BODY="Auto-sync from \`portainer/portainer@develop\` (\`${{ steps.status.outputs.upstream_sha }}\`).
+
+          Merge was clean. Review and merge into \`develop\`."
+          else
+            git merge --abort || true
+            # Keep a branch pointing at current develop tip so a human can resolve against upstream.
+            git push -u origin "${BRANCH}"
+            BODY="Auto-sync from \`portainer/portainer@develop\` (\`${{ steps.status.outputs.upstream_sha }}\`).
+
+          **Merge conflicts detected.** Resolve locally:
+
+          \`\`\`bash
+          git fetch upstream
+          git checkout develop
+          git merge upstream/develop
+          # resolve conflicts, then push
+          \`\`\`"
+          fi
+
+          EXISTING="$(gh pr list --base develop --head "${BRANCH}" --json number --jq '.[0].number // empty')"
+          if [[ -n "${EXISTING}" ]]; then
+            echo "PR #${EXISTING} already open."
+            exit 0
+          fi
+
+          gh pr create \
+            --base develop \
+            --head "${BRANCH}" \
+            --title "chore(ci): sync upstream develop (${{ steps.status.outputs.upstream_sha }})" \
+            --body "${BODY}"
+
+      - name: No updates
+        if: steps.status.outputs.behind == '0'
+        run: echo "develop is already up to date with upstream/develop."

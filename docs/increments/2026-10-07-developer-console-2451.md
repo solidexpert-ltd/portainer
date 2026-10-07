@@ -4,7 +4,7 @@
 **Why:** Drop Portainer marketing UI, stay on current LTS, keep watching public releases.
 **Spec:**
 - `docs/features/developer-console-branding/SPEC.md`
-**CI:** (filled after push)
-**Image:** `solidexpert/portainer-ce:<run_number>`
-**Prod swap:** `portainer` (backup `portainer-old…`)
-**Перезалить:** `portainer` (standalone container)
+**CI:** `solidexpert-ltd/portainer` run `#5` https://github.com/solidexpert-ltd/portainer/actions/runs/37656403677
+**Image:** `solidexpert/portainer-ce:5` (also `:2.45.1`, `:latest`)
+**Prod swap:** `portainer` (backup `portainer-oldportainer-ce-latest`)
+**Перезалить:** `portainer` (standalone container on host)

@@ -9,6 +9,12 @@ import { SidebarProvider } from '../useSidebarState';
 
 import { Footer } from './Footer';
 
+vi.mock('./UpdateNotifications', () => ({
+  UpdateNotification: () => (
+    <div data-cy="update-notification">Update Notification</div>
+  ),
+}));
+
 vi.mock('./BuildInfoModal', () => ({
   BuildInfoModalButton: () => (
     <button data-cy="build-info-modal-button" type="button">
@@ -33,18 +39,16 @@ describe('Footer', () => {
       expect(screen.getByText('©')).toBeInTheDocument();
     });
 
-    test('should render Portainer Community Edition text', () => {
+    test('should render 1CRM Developer Console text', () => {
       renderComponent();
 
-      expect(
-        screen.getByText('Portainer Community Edition')
-      ).toBeInTheDocument();
+      expect(screen.getByText('1CRM Developer Console')).toBeInTheDocument();
     });
 
-    test('should NOT render UpdateNotification component', () => {
+    test('should render UpdateNotification component', () => {
       renderComponent();
 
-      expect(screen.queryByText(/New version available/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId('update-notification')).toBeInTheDocument();
     });
 
     test('should render BuildInfoModalButton component', () => {
@@ -76,29 +80,15 @@ describe('Footer', () => {
     test('should NOT render UpdateNotification component in BE', () => {
       renderComponent();
 
-      expect(screen.queryByText(/New version available/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('update-notification')
+      ).not.toBeInTheDocument();
     });
 
     test('should render BuildInfoModalButton component', () => {
       renderComponent();
 
       expect(screen.getByTestId('build-info-modal-button')).toBeInTheDocument();
-    });
-  });
-
-  describe('FooterContent', () => {
-    test('should render all child elements in correct order', () => {
-      renderComponent();
-
-      const copyrightSymbol = screen.getByText('©');
-      const editionText = screen.getByText(
-        /Portainer (Community|Business) Edition/
-      );
-      const buildInfoButton = screen.getByTestId('build-info-modal-button');
-
-      expect(copyrightSymbol).toBeInTheDocument();
-      expect(editionText).toBeInTheDocument();
-      expect(buildInfoButton).toBeInTheDocument();
     });
   });
 });

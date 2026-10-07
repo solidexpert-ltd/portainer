@@ -4,6 +4,7 @@ import { getEnvironments } from '@/react/portainer/environments/environment.serv
 import { dispatchCacheRefreshEvent } from '@/portainer/services/http-request.helper';
 import { isSameDocumentUrl, isValidReturnUrl } from '@/portainer/helpers/url-utils';
 import { storeReturnUrl, getReturnUrl, cleanReturnUrl } from '@/react/portainer/helpers/returnUrl';
+import './auth-onecrm.css';
 
 class AuthenticationController {
   /* @ngInject */

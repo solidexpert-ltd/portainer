@@ -60,8 +60,11 @@ func (handler *Handler) version(w http.ResponseWriter, r *http.Request) *httperr
 		result.Runtime = build.GetRuntimeInfo()
 	}
 
-	// SolidExpert fork: skip upstream version nag. Releases are tracked via our image tags.
-	result.UpdateAvailable = false
+	latestVersion := GetLatestVersion()
+	if HasNewerVersion(portainer.APIVersion, latestVersion) {
+		result.UpdateAvailable = true
+		result.LatestVersion = latestVersion
+	}
 
 	return response.JSON(w, &result)
 }

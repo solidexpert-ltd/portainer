@@ -3,6 +3,7 @@ import clsx from 'clsx';
 
 import { isBE } from '@/react/portainer/feature-flags/feature-flags.service';
 
+import { UpdateNotification } from './UpdateNotifications';
 import { BuildInfoModalButton } from './BuildInfoModal';
 import '@reach/dialog/styles.css';
 import styles from './Footer.module.css';
@@ -14,9 +15,11 @@ export function Footer() {
 function CEFooter() {
   return (
     <div className={clsx(styles.root, 'text-center')}>
+      <UpdateNotification />
+
       <FooterContent>
         <span>&copy;</span>
-        <span>Portainer Community Edition</span>
+        <span>1CRM Developer Console</span>
 
         <BuildInfoModalButton />
       </FooterContent>

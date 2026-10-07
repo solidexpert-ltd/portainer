@@ -8,7 +8,8 @@ Unofficial fork of [portainer/portainer](https://github.com/portainer/portainer)
 | --- | --- |
 | **Upstream** | Merged `release/2.45.1` (Portainer CE 2.45.1 LTS) |
 | **BE upgrade button** | Removed in-tree from `Sidebar.tsx` (not only CSS) |
-| **“New version available”** | Removed from `Footer.tsx`; `/api/system/version` always reports `UpdateAvailable: false` |
+| **Version tracking** | Upstream `/api/system/version` + footer “New version available” kept — continue merging public LTS |
+| **Login / brand** | Fuse-style **1CRM Developer Console** login + sidebar brand |
 
 ## Wave A (ops / packaging)
 

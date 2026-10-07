@@ -33,10 +33,6 @@ const INJECTED_HTML = `
       pointer-events: none !important;
     }
 
-    /* "New version available" footer card */
-    [class*="UpdateNotifications"] {
-      display: none !important;
-    }
   </style>
   <script>
     (function () {
@@ -52,18 +48,12 @@ const INJECTED_HTML = `
         }
       };
 
-      // Hide Upgrade BE button by text (CSS :has / class hashes are fragile across builds)
+      // Hide Upgrade BE button by text (in-tree removal is primary; this is a safety net)
       function hideUpgradeBe() {
         document.querySelectorAll('.sidebar button, nav button, button').forEach(function (btn) {
           var t = (btn.textContent || '').trim();
           if (t.indexOf('Upgrade to Business') !== -1) {
             btn.style.setProperty('display', 'none', 'important');
-          }
-        });
-        document.querySelectorAll('div').forEach(function (el) {
-          var t = (el.textContent || '').trim();
-          if (t.indexOf('New version available') === 0 && el.querySelector('a[href*="github.com/portainer"]')) {
-            el.style.setProperty('display', 'none', 'important');
           }
         });
       }
@@ -95,20 +85,6 @@ app.get('/', async (req, res) => {
 });
 app.get('/api/motd', (req, res) => {
   res.json({});
-});
-app.get('/api/system/version', async (req, res, next) => {
-  // Force no upstream update banner even if an old UI build still polls this endpoint.
-  try {
-    const headers = { ...req.headers };
-    delete headers.host;
-    const response = await fetch(`${TARGET_URL}/api/system/version`, { headers });
-    const data = await response.json();
-    data.UpdateAvailable = false;
-    delete data.LatestVersion;
-    res.status(response.status).json(data);
-  } catch (e) {
-    next();
-  }
 });
 app.use(createProxyMiddleware({
   target: TARGET_URL,

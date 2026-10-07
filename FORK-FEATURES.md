@@ -2,11 +2,19 @@
 
 Unofficial fork of [portainer/portainer](https://github.com/portainer/portainer). Not affiliated with Portainer Business Edition.
 
+## Base
+
+| Item | Notes |
+| --- | --- |
+| **Upstream** | Merged `release/2.45.1` (Portainer CE 2.45.1 LTS) |
+| **BE upgrade button** | Removed in-tree from `Sidebar.tsx` (not only CSS) |
+| **“New version available”** | Removed from `Footer.tsx`; `/api/system/version` always reports `UpdateAvailable: false` |
+
 ## Wave A (ops / packaging)
 
 | Feature | How |
 | --- | --- |
-| **without-annoying UI** | Published image wraps CE with [ngxson/portainer-ce-without-annoying](https://github.com/ngxson/portainer-ce-without-annoying)-style Node proxy (`build/without-annoying/`). Hides BE upsell, empty MOTD, blocks Matomo. |
+| **without-annoying UI** | Published image wraps CE with [ngxson/portainer-ce-without-annoying](https://github.com/ngxson/portainer-ce-without-annoying)-style Node proxy (`build/without-annoying/`). Extra CSS/JS + MOTD/version stubs as backup. |
 | **Scheduled Portainer backup** | Sidecar stack: `docker-composes/production/portainer/portainer-ce.stack.yml` using `dockurr/portainer-backup`. |
 
 ## Wave B (in-tree)

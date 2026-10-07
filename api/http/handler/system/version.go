@@ -60,11 +60,8 @@ func (handler *Handler) version(w http.ResponseWriter, r *http.Request) *httperr
 		result.Runtime = build.GetRuntimeInfo()
 	}
 
-	latestVersion := GetLatestVersion()
-	if HasNewerVersion(portainer.APIVersion, latestVersion) {
-		result.UpdateAvailable = true
-		result.LatestVersion = latestVersion
-	}
+	// SolidExpert fork: skip upstream version nag. Releases are tracked via our image tags.
+	result.UpdateAvailable = false
 
 	return response.JSON(w, &result)
 }

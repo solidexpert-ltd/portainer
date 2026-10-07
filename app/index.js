@@ -8,6 +8,10 @@ import { UI_ROUTER_REACT_HYBRID } from '@uirouter/react-hybrid';
 import { Edition } from '@/react/portainer/feature-flags/enums';
 import { init as initFeatureService } from '@/react/portainer/feature-flags/feature-flags.service';
 
+// Must load before angular.module('portainer', …) / ng-app bootstrap.
+// require.context below is unordered and can fail mid-walk; keep vendors eager.
+import './vendors';
+
 import './agent';
 import { azureModule } from './azure';
 import './docker/__module';
@@ -69,9 +73,15 @@ angular
   .run(onStartupAngular)
   .config(configApp);
 
-if (require) {
+if (typeof require === 'function' && require.context) {
   const req = require.context('./', true, /^(?!.*\.test\.js$).*\.js$/im);
   req.keys().forEach(function (key) {
-    req(key);
+    try {
+      req(key);
+    } catch (err) {
+      // One broken legacy file must not skip the rest (e.g. vendors / controllers).
+      // eslint-disable-next-line no-console
+      console.error('Failed to load module via require.context:', key, err);
+    }
   });
 }

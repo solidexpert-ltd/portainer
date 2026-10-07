@@ -77,7 +77,10 @@ class AuthenticationController {
   // set the password input type to password, so that browser autofills don't treat the input as text
   setPasswordInputType(inputType) {
     this.state.passwordInputType = inputType;
-    document.getElementById('password').setAttribute('type', inputType);
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+      passwordInput.setAttribute('type', inputType);
+    }
   }
 
   logout(error) {
@@ -302,6 +305,7 @@ class AuthenticationController {
 
       await this.authEnabledFlowAsync();
     } catch (err) {
+      this.state.loginInProgress = false;
       this.Notifications.error('Failure', err, 'Unable to retrieve public settings');
     }
   }

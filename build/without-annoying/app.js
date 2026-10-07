@@ -7,11 +7,11 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // Belt-and-suspenders for any residual BE chrome if an older build is still cached.
 // Primary removal is in-tree (Sidebar / Footer / system version handler).
+// Keep CSS selectors conservative — aggressive :has() rules can hide login controls.
 const INJECTED_HTML = `
   <style>
     /* Upgrade to Business Edition button (top of sidebar) */
     .sidebar > button,
-    button:has(> .lucide):has(+ *),
     .sidebar button[class*="bg-[#023959]"],
     .sidebar button[class*="bg-\\[\\#023959\\]"] {
       display: none !important;
@@ -39,18 +39,18 @@ const INJECTED_HTML = `
       var headNode = document.getElementsByTagName('script')[0];
       if (!headNode || !headNode.parentNode) return;
       headNode = headNode.parentNode;
-      headNode.originalInsertBefore = headNode.insertBefore;
+      var originalInsertBefore = headNode.insertBefore.bind(headNode);
       headNode.insertBefore = function(newNode, referenceNode) {
         if (newNode && newNode.src && newNode.src.indexOf('matomo') !== -1) {
           console.log('Blocked insertion of matomo script node');
         } else {
-          headNode.originalInsertBefore(newNode, referenceNode);
+          return originalInsertBefore(newNode, referenceNode);
         }
       };
 
       // Hide Upgrade BE button by text (in-tree removal is primary; this is a safety net)
       function hideUpgradeBe() {
-        document.querySelectorAll('.sidebar button, nav button, button').forEach(function (btn) {
+        document.querySelectorAll('.sidebar button, nav button').forEach(function (btn) {
           var t = (btn.textContent || '').trim();
           if (t.indexOf('Upgrade to Business') !== -1) {
             btn.style.setProperty('display', 'none', 'important');

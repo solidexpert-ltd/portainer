@@ -9,12 +9,6 @@ import { SidebarProvider } from '../useSidebarState';
 
 import { Footer } from './Footer';
 
-vi.mock('./UpdateNotifications', () => ({
-  UpdateNotification: () => (
-    <div data-cy="update-notification">Update Notification</div>
-  ),
-}));
-
 vi.mock('./BuildInfoModal', () => ({
   BuildInfoModalButton: () => (
     <button data-cy="build-info-modal-button" type="button">
@@ -47,10 +41,10 @@ describe('Footer', () => {
       ).toBeInTheDocument();
     });
 
-    test('should render UpdateNotification component', () => {
+    test('should NOT render UpdateNotification component', () => {
       renderComponent();
 
-      expect(screen.getByTestId('update-notification')).toBeInTheDocument();
+      expect(screen.queryByText(/New version available/i)).not.toBeInTheDocument();
     });
 
     test('should render BuildInfoModalButton component', () => {
@@ -82,9 +76,7 @@ describe('Footer', () => {
     test('should NOT render UpdateNotification component in BE', () => {
       renderComponent();
 
-      expect(
-        screen.queryByTestId('update-notification')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/New version available/i)).not.toBeInTheDocument();
     });
 
     test('should render BuildInfoModalButton component', () => {

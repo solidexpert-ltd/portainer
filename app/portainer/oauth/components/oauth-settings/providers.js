@@ -30,10 +30,10 @@ export default {
     authStyle: OAuthStyle.AutoDetect,
   },
   onecrm: {
-    authUrl: 'https://1crm.io/api/user/connect/authorize',
-    accessTokenUrl: 'https://1crm.io/api/user/connect/token',
-    resourceUrl: 'https://1crm.io/api/user/connect/userinfo',
-    logoutUrl: 'https://1crm.io/api/user/connect/logout',
+    authUrl: 'https://account.1crm.io/api/user/connect/authorize',
+    accessTokenUrl: 'https://account.1crm.io/api/user/connect/token',
+    resourceUrl: 'https://account.1crm.io/api/user/connect/userinfo',
+    logoutUrl: 'https://account.1crm.io/api/user/connect/logout',
     // preferred_username is always set by user-service OidcController (phone-first users
     // often have empty email). GetUsername still falls back to email/phone_number/sub.
     userIdentifier: 'preferred_username',
@@ -57,7 +57,7 @@ export function getProviderByUrl(providerAuthURL = '') {
     return 'github';
   }
 
-  if (providerAuthURL.includes('1crm.io/api/user/connect')) {
+  if (providerAuthURL.includes('account.1crm.io') || providerAuthURL.includes('1crm.io/api/user/connect')) {
     return 'onecrm';
   }
 

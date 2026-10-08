@@ -71,32 +71,14 @@ func (c *ComposeDeployer) withComposeService(
 		})
 }
 
-// Deploy creates and starts containers
+// Deploy creates and starts containers.
+// An empty DeployOptions.Services list deploys the whole project.
+// A non-empty list deploys only those services and drops their dependencies.
 func (c *ComposeDeployer) Deploy(ctx context.Context, filePaths []string, options libstack.DeployOptions) error {
 	return c.withComposeService(ctx, filePaths, options.Options, func(composeService api.Compose, project *types.Project) error {
-		addServiceLabels(project, false, options.EdgeStackID)
-
-		project = project.WithoutUnnecessaryResources()
-
-		opts := api.UpOptions{
-			Start: api.StartOptions{
-				Project: project,
-			},
-		}
-		if options.ForceRecreate {
-			opts.Create.Recreate = api.RecreateForce
-		}
-
-		opts.Create.RemoveOrphans = options.RemoveOrphans
-		if removeOrphans, ok := project.Environment[cmdcompose.ComposeRemoveOrphans]; ok {
-			opts.Create.RemoveOrphans = utils.StringToBool(removeOrphans)
-		}
-		if ignoreOrphans, ok := project.Environment[cmdcompose.ComposeIgnoreOrphans]; ok {
-			opts.Create.IgnoreOrphans = utils.StringToBool(ignoreOrphans)
-		}
-
-		if options.AbortOnContainerExit {
-			opts.Start.OnExit = api.CascadeStop
+		project, opts, err := prepareComposeUp(project, options)
+		if err != nil {
+			return fmt.Errorf("failed to select compose services: %w", err)
 		}
 
 		if err := composeService.Build(ctx, project, api.BuildOptions{}); err != nil {
@@ -111,6 +93,61 @@ func (c *ComposeDeployer) Deploy(ctx context.Context, filePaths []string, option
 
 		return nil
 	})
+}
+
+// prepareComposeUp returns the project and options passed to composeService.Up.
+// An empty service list keeps today's whole-project up, including force-recreate
+// and remove-orphans. A non-empty list keeps only the named services.
+func prepareComposeUp(project *types.Project, options libstack.DeployOptions) (*types.Project, api.UpOptions, error) {
+	addServiceLabels(project, false, options.EdgeStackID)
+
+	if len(options.Services) > 0 {
+		filtered, err := filterProjectServices(project, options.Services)
+		if err != nil {
+			return nil, api.UpOptions{}, err
+		}
+		project = filtered
+	}
+
+	project = project.WithoutUnnecessaryResources()
+
+	opts := api.UpOptions{
+		Start: api.StartOptions{
+			Project: project,
+		},
+	}
+	// A named-service up must not recreate or delete sibling containers.
+	// Leave Recreate unset and RemoveOrphans false, including when the
+	// process environment asks compose to remove orphans.
+	if len(options.Services) == 0 {
+		if options.ForceRecreate {
+			opts.Create.Recreate = api.RecreateForce
+		}
+
+		opts.Create.RemoveOrphans = options.RemoveOrphans
+		if removeOrphans, ok := project.Environment[cmdcompose.ComposeRemoveOrphans]; ok {
+			opts.Create.RemoveOrphans = utils.StringToBool(removeOrphans)
+		}
+		if ignoreOrphans, ok := project.Environment[cmdcompose.ComposeIgnoreOrphans]; ok {
+			opts.Create.IgnoreOrphans = utils.StringToBool(ignoreOrphans)
+		}
+	}
+
+	if options.AbortOnContainerExit {
+		opts.Start.OnExit = api.CascadeStop
+	}
+
+	return project, opts, nil
+}
+
+// filterProjectServices keeps only the named services and drops their dependencies,
+// matching `docker compose up --no-deps`. An empty list returns the project unchanged.
+func filterProjectServices(project *types.Project, services []string) (*types.Project, error) {
+	if project == nil || len(services) == 0 {
+		return project, nil
+	}
+
+	return project.WithSelectedServices(services, types.IgnoreDependencies)
 }
 
 // Run runs the given service just once, without considering dependencies

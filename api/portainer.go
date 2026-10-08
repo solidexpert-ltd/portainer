@@ -1734,6 +1734,10 @@ type (
 		// When this is set, docker compose will output its logs to stdout
 		AbortOnContainerExit bool
 		Prune                bool
+		// Services is forwarded to libstack.DeployOptions.Services.
+		// An empty list deploys the whole stack. One name updates only that service
+		// and does not start its dependencies.
+		Services []string
 	}
 
 	ComposeDownOptions struct {

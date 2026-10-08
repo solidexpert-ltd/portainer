@@ -62,6 +62,7 @@ func (manager *ComposeStackManager) Up(ctx context.Context, stack *portainer.Sta
 		ForceRecreate:        options.ForceRecreate,
 		AbortOnContainerExit: options.AbortOnContainerExit,
 		RemoveOrphans:        options.Prune,
+		Services:             options.Services,
 	}); err != nil {
 		return fmt.Errorf("failed to deploy a stack: %w", err)
 	}

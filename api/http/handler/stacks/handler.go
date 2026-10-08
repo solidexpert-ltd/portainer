@@ -32,10 +32,13 @@ import (
 type Handler struct {
 	stackCreationMutex *sync.Mutex
 	stackDeletionMutex *sync.Mutex
+	stackImageMu       sync.Mutex
+	stackImageLocks    map[portainer.StackID]*sync.Mutex
 	requestBouncer     security.BouncerService
 	*mux.Router
 	DataStore               dataservices.DataStore
 	DockerClientFactory     *dockerclient.ClientFactory
+	containerRuntime        stackContainerRuntime
 	FileService             portainer.FileService
 	GitService              portainer.GitService
 	SwarmStackManager       portainer.SwarmStackManager
@@ -59,12 +62,18 @@ func NewHandler(bouncer security.BouncerService, teardownService teardown.Servic
 		Router:             mux.NewRouter(),
 		stackCreationMutex: &sync.Mutex{},
 		stackDeletionMutex: &sync.Mutex{},
+		stackImageLocks:    make(map[portainer.StackID]*sync.Mutex),
 		requestBouncer:     bouncer,
 		teardownService:    teardownService,
 	}
 
 	h.Handle("/stacks/create/{type}/{method}",
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.stackCreate))).Methods(http.MethodPost)
+	// Literal path so /stacks/{id} does not capture it. PublicAccess does not
+	// check a Portainer JWT; the handler compares PORTAINER_STACK_UPDATE_TOKEN
+	// before it looks up a container or writes a stack file.
+	h.Handle("/stacks/container-image",
+		bouncer.PublicAccess(httperror.LoggerHandler(h.stackContainerImage))).Methods(http.MethodPost)
 	h.Handle("/stacks",
 		bouncer.AuthenticatedAccess(httperror.LoggerHandler(h.stackList))).Methods(http.MethodGet)
 	h.Handle("/stacks/{id}",

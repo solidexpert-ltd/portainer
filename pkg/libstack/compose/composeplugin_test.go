@@ -1454,6 +1454,164 @@ func Test_CredentialsStore_Behavior(t *testing.T) {
 	})
 }
 
+func Test_ServiceFilter(t *testing.T) {
+	project := threeServiceProject(t, nil)
+	require.ElementsMatch(t, []string{"web", "api", "db"}, project.ServiceNames())
+	require.NotEmpty(t, project.Services["web"].DependsOn)
+	require.Contains(t, project.Services["web"].DependsOn, "api")
+
+	filtered, err := filterProjectServices(project, []string{"web"})
+	require.NoError(t, err)
+	require.Equal(t, []string{"web"}, filtered.ServiceNames())
+	require.Empty(t, filtered.Services["web"].DependsOn)
+	require.NotContains(t, filtered.Services, "api")
+	require.NotContains(t, filtered.Services, "db")
+	require.ElementsMatch(t, []string{"web", "api", "db"}, project.ServiceNames())
+
+	unchanged, err := filterProjectServices(project, nil)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"web", "api", "db"}, unchanged.ServiceNames())
+
+	_, err = filterProjectServices(project, []string{"missing"})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "no such service: missing")
+}
+
+func Test_DeployServiceFilter(t *testing.T) {
+	t.Run("empty list passes the full project onward", func(t *testing.T) {
+		project := threeServiceProject(t, []string{cmdcompose.ComposeRemoveOrphans + "=true"})
+
+		deployed, opts, err := prepareComposeUp(project, libstack.DeployOptions{
+			ForceRecreate: true,
+			RemoveOrphans: false,
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"web", "api", "db"}, deployed.ServiceNames())
+		require.Equal(t, api.RecreateForce, opts.Create.Recreate)
+		require.True(t, opts.Create.RemoveOrphans)
+		require.Equal(t, deployed, opts.Start.Project)
+	})
+
+	t.Run("named service drops dependencies and sibling cleanup", func(t *testing.T) {
+		project := threeServiceProject(t, []string{cmdcompose.ComposeRemoveOrphans + "=true"})
+
+		deployed, opts, err := prepareComposeUp(project, libstack.DeployOptions{
+			ForceRecreate: true,
+			RemoveOrphans: true,
+			Services:      []string{"web"},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"web"}, deployed.ServiceNames())
+		require.Empty(t, deployed.Services["web"].DependsOn)
+		require.NotContains(t, deployed.Services, "api")
+		require.NotContains(t, deployed.Services, "db")
+		require.Empty(t, opts.Create.Recreate)
+		require.False(t, opts.Create.RemoveOrphans)
+		require.False(t, opts.Create.IgnoreOrphans)
+		require.Equal(t, deployed, opts.Start.Project)
+		require.ElementsMatch(t, []string{"web", "api", "db"}, project.ServiceNames())
+	})
+}
+
+func Test_DeployCallsUpWithServiceFilter(t *testing.T) {
+	dir := t.TempDir()
+	composeFile := createFile(t, dir, "docker-compose.yml", `
+services:
+  web:
+    image: nginx:1
+    depends_on:
+      - api
+  api:
+    image: app:1
+    depends_on:
+      - db
+  db:
+    image: postgres:1
+`)
+
+	t.Run("empty list", func(t *testing.T) {
+		recorder := &recordingComposeService{}
+		w := ComposeDeployer{createComposeServiceFn: func(command.Cli, ...compose.Option) api.Compose {
+			return recorder
+		}}
+
+		err := w.Deploy(t.Context(), []string{composeFile}, libstack.DeployOptions{
+			Options:       libstack.Options{ProjectName: "svcfilter"},
+			ForceRecreate: true,
+			RemoveOrphans: true,
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"web", "api", "db"}, recorder.project.ServiceNames())
+		require.Equal(t, api.RecreateForce, recorder.opts.Create.Recreate)
+		require.True(t, recorder.opts.Create.RemoveOrphans)
+	})
+
+	t.Run("one service", func(t *testing.T) {
+		recorder := &recordingComposeService{}
+		w := ComposeDeployer{createComposeServiceFn: func(command.Cli, ...compose.Option) api.Compose {
+			return recorder
+		}}
+
+		err := w.Deploy(t.Context(), []string{composeFile}, libstack.DeployOptions{
+			Options: libstack.Options{
+				ProjectName: "svcfilter",
+				Env:         []string{cmdcompose.ComposeRemoveOrphans + "=true"},
+			},
+			ForceRecreate: true,
+			RemoveOrphans: true,
+			Services:      []string{"web"},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"web"}, recorder.project.ServiceNames())
+		require.Empty(t, recorder.project.Services["web"].DependsOn)
+		require.Empty(t, recorder.opts.Create.Recreate)
+		require.False(t, recorder.opts.Create.RemoveOrphans)
+	})
+}
+
+type recordingComposeService struct {
+	api.Compose
+	project *types.Project
+	opts    api.UpOptions
+}
+
+func (s *recordingComposeService) Build(context.Context, *types.Project, api.BuildOptions) error {
+	return nil
+}
+
+func (s *recordingComposeService) Up(_ context.Context, project *types.Project, opts api.UpOptions) error {
+	s.project = project
+	s.opts = opts
+	return nil
+}
+
+func threeServiceProject(t *testing.T, env []string) *types.Project {
+	t.Helper()
+
+	dir := t.TempDir()
+	composeFile := createFile(t, dir, "docker-compose.yml", `
+services:
+  web:
+    image: nginx:1
+    depends_on:
+      - api
+  api:
+    image: app:1
+    depends_on:
+      - db
+  db:
+    image: postgres:1
+`)
+
+	project, err := createProject(t.Context(), []string{composeFile}, libstack.Options{
+		ProjectName: "svcfilter",
+		Env:         env,
+	})
+	require.NoError(t, err)
+
+	return project
+}
+
 func createMockComposeService(command.Cli, ...compose.Option) api.Compose {
 	return &mockComposeService{}
 }

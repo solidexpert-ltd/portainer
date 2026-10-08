@@ -113,6 +113,10 @@ type DeployOptions struct {
 	AbortOnContainerExit bool
 	RemoveOrphans        bool
 	EdgeStackID          portainer.EdgeStackID
+	// Services limits compose up to these service names and drops their dependencies
+	// (`docker compose up --no-deps <service>`). An empty list deploys the whole project.
+	// When Services is set, Deploy leaves Recreate unset and RemoveOrphans false.
+	Services []string
 }
 
 type RunOptions struct {

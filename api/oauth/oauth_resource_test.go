@@ -71,4 +71,85 @@ func Test_getUsername(t *testing.T) {
 			t.Errorf("getUsername should succeed if username from oauth userinfo object matched and non-zero (or negative)")
 		}
 	})
+
+	t.Run("falls back to preferred_username when email empty", func(t *testing.T) {
+		oauthSettings := &portainer.OAuthSettings{UserIdentifier: "email"}
+		datamap := map[string]any{
+			"email":               "",
+			"preferred_username":  "+375291112233",
+			"sub":                 "user-guid",
+		}
+
+		got, err := GetUsername(datamap, oauthSettings.UserIdentifier)
+		if err != nil {
+			t.Fatalf("expected fallback username, got err: %v", err)
+		}
+		if got != "+375291112233" {
+			t.Fatalf("expected preferred_username fallback, got %q", got)
+		}
+	})
+
+	t.Run("falls back to phone_number then sub", func(t *testing.T) {
+		oauthSettings := &portainer.OAuthSettings{UserIdentifier: "email"}
+		datamap := map[string]any{
+			"phone_number": "+375291112233",
+			"sub":          "user-guid",
+		}
+
+		got, err := GetUsername(datamap, oauthSettings.UserIdentifier)
+		if err != nil {
+			t.Fatalf("expected phone_number fallback, got err: %v", err)
+		}
+		if got != "+375291112233" {
+			t.Fatalf("expected phone_number, got %q", got)
+		}
+	})
+
+	t.Run("falls back to sub when only sub present", func(t *testing.T) {
+		oauthSettings := &portainer.OAuthSettings{UserIdentifier: "email"}
+		datamap := map[string]any{"sub": "user-guid"}
+
+		got, err := GetUsername(datamap, oauthSettings.UserIdentifier)
+		if err != nil {
+			t.Fatalf("expected sub fallback, got err: %v", err)
+		}
+		if got != "user-guid" {
+			t.Fatalf("expected sub, got %q", got)
+		}
+	})
+
+	t.Run("prefers configured identifier over later fallbacks", func(t *testing.T) {
+		oauthSettings := &portainer.OAuthSettings{UserIdentifier: "preferred_username"}
+		datamap := map[string]any{
+			"email":              "ops@1crm.io",
+			"preferred_username": "+375291112233",
+		}
+
+		got, err := GetUsername(datamap, oauthSettings.UserIdentifier)
+		if err != nil {
+			t.Fatalf("unexpected err: %v", err)
+		}
+		if got != "+375291112233" {
+			t.Fatalf("expected preferred_username, got %q", got)
+		}
+	})
+}
+
+func Test_splitOAuthScopes(t *testing.T) {
+	t.Parallel()
+
+	got := splitOAuthScopes("openid user:email user:firstName")
+	if len(got) != 3 || got[0] != "openid" || got[1] != "user:email" || got[2] != "user:firstName" {
+		t.Fatalf("space-separated scopes: got %#v", got)
+	}
+
+	got = splitOAuthScopes("openid,user:email, offline_access")
+	if len(got) != 3 || got[0] != "openid" || got[1] != "user:email" || got[2] != "offline_access" {
+		t.Fatalf("comma-separated scopes: got %#v", got)
+	}
+
+	got = splitOAuthScopes("openid, user:email user:lastName")
+	if len(got) != 3 {
+		t.Fatalf("mixed separators: got %#v", got)
+	}
 }

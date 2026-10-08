@@ -182,11 +182,18 @@ func buildConfig(config *portainer.OAuthSettings) *oauth2.Config {
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		RedirectURL:  config.RedirectURI,
-		Scopes:       strings.Split(config.Scopes, ","),
+		Scopes:       splitOAuthScopes(config.Scopes),
 		Endpoint: oauth2.Endpoint{
 			AuthURL:   config.AuthorizationURI,
 			TokenURL:  config.AccessTokenURI,
 			AuthStyle: config.AuthStyle,
 		},
 	}
+}
+
+// splitOAuthScopes accepts comma-separated and/or space-separated scope lists
+// (Portainer UI presets use spaces; some IdPs historically used commas).
+func splitOAuthScopes(scopes string) []string {
+	normalized := strings.ReplaceAll(scopes, ",", " ")
+	return strings.Fields(normalized)
 }

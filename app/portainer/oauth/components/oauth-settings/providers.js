@@ -34,7 +34,9 @@ export default {
     accessTokenUrl: 'https://1crm.io/api/user/connect/token',
     resourceUrl: 'https://1crm.io/api/user/connect/userinfo',
     logoutUrl: 'https://1crm.io/api/user/connect/logout',
-    userIdentifier: 'email',
+    // preferred_username is always set by user-service OidcController (phone-first users
+    // often have empty email). GetUsername still falls back to email/phone_number/sub.
+    userIdentifier: 'preferred_username',
     // Match OpenIddict permissions for portainer-developer-console (no bare "profile" scope)
     scopes: 'openid user:email user:firstName user:lastName offline_access',
     authStyle: OAuthStyle.InParams,

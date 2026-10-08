@@ -30,9 +30,12 @@ export default {
     authStyle: OAuthStyle.AutoDetect,
   },
   onecrm: {
+    // Browser authorize/logout stay on the public account host.
+    // Token + userinfo are called by the Portainer container — use Docker DNS
+    // (solidexcrm_default). Public VIP hairpin to account.1crm.io:443 fails.
     authUrl: 'https://account.1crm.io/api/user/connect/authorize',
-    accessTokenUrl: 'https://account.1crm.io/api/user/connect/token',
-    resourceUrl: 'https://account.1crm.io/api/user/connect/userinfo',
+    accessTokenUrl: 'http://solidex.users.service/connect/token',
+    resourceUrl: 'http://solidex.users.service/connect/userinfo',
     logoutUrl: 'https://account.1crm.io/api/user/connect/logout',
     // preferred_username is always set by user-service OidcController (phone-first users
     // often have empty email). GetUsername still falls back to email/phone_number/sub.

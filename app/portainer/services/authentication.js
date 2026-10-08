@@ -72,13 +72,18 @@ angular.module('portainer.app').factory('Authentication', [
       return $async(initAsync);
     }
 
-    async function OAuthLoginAsync(code) {
-      await OAuth.validate({ code: code }).$promise;
+    async function OAuthLoginAsync(code, codeVerifier) {
+      const payload = { code: code };
+      if (codeVerifier) {
+        payload.codeVerifier = codeVerifier;
+      }
+      await OAuth.validate(payload).$promise;
+      LocalStorage.cleanPKCEVerifier();
       await loadUserData();
     }
 
-    function OAuthLogin(code) {
-      return $async(OAuthLoginAsync, code);
+    function OAuthLogin(code, codeVerifier) {
+      return $async(OAuthLoginAsync, code, codeVerifier);
     }
 
     async function loginAsync(username, password) {

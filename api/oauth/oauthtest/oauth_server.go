@@ -15,16 +15,15 @@ import (
 
 const AccessToken = "test-token"
 
-// OAuthRoutes is an OAuth 2.0 compliant handler
-func OAuthRoutes(code string, config *portainer.OAuthSettings) http.Handler {
+// OAuthRoutes is an OAuth 2.0 compliant handler. When requiredCodeVerifier is non-empty,
+// the token endpoint rejects exchanges that omit or mismatch code_verifier (PKCE).
+func OAuthRoutes(code string, config *portainer.OAuthSettings, requiredCodeVerifier string) http.Handler {
 	router := mux.NewRouter()
 
 	router.HandleFunc(
 		"/authorize",
 		func(w http.ResponseWriter, req *http.Request) {
 			location := fmt.Sprintf("%s?code=%s&state=%s", config.RedirectURI, code, "anything")
-			// w.Header().Set("Location", location)
-			// w.WriteHeader(http.StatusFound)
 			http.Redirect(w, req, location, http.StatusFound)
 		},
 	).Methods(http.MethodGet)
@@ -44,6 +43,11 @@ func OAuthRoutes(code string, config *portainer.OAuthSettings) http.Handler {
 
 			reqCode := req.FormValue("code")
 			if reqCode != code {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			if requiredCodeVerifier != "" && req.FormValue("code_verifier") != requiredCodeVerifier {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
@@ -87,6 +91,11 @@ func OAuthRoutes(code string, config *portainer.OAuthSettings) http.Handler {
 
 // RunOAuthServer is a barebones OAuth 2.0 compliant test server which can be used to test OAuth 2 functionality
 func RunOAuthServer(code string, config *portainer.OAuthSettings) (*httptest.Server, *portainer.OAuthSettings) {
+	return RunOAuthServerWithPKCE(code, config, "")
+}
+
+// RunOAuthServerWithPKCE starts a test IdP that requires the given PKCE code_verifier on token exchange.
+func RunOAuthServerWithPKCE(code string, config *portainer.OAuthSettings, requiredCodeVerifier string) (*httptest.Server, *portainer.OAuthSettings) {
 	srv := httptest.NewUnstartedServer(http.DefaultServeMux)
 
 	addr := srv.Listener.Addr()
@@ -96,7 +105,7 @@ func RunOAuthServer(code string, config *portainer.OAuthSettings) (*httptest.Ser
 	config.ResourceURI = fmt.Sprintf("http://%s/user", addr)
 	config.RedirectURI = fmt.Sprintf("http://%s/", addr)
 
-	srv.Config.Handler = OAuthRoutes(code, config)
+	srv.Config.Handler = OAuthRoutes(code, config, requiredCodeVerifier)
 	srv.Start()
 
 	return srv, config

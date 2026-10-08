@@ -29,6 +29,16 @@ export default {
     scopes: 'id email name',
     authStyle: OAuthStyle.AutoDetect,
   },
+  onecrm: {
+    authUrl: 'https://1crm.io/api/user/connect/authorize',
+    accessTokenUrl: 'https://1crm.io/api/user/connect/token',
+    resourceUrl: 'https://1crm.io/api/user/connect/userinfo',
+    logoutUrl: 'https://1crm.io/api/user/connect/logout',
+    userIdentifier: 'email',
+    // Match OpenIddict permissions for portainer-developer-console (no bare "profile" scope)
+    scopes: 'openid user:email user:firstName user:lastName offline_access',
+    authStyle: OAuthStyle.InParams,
+  },
   custom: { authUrl: '', accessTokenUrl: '', resourceUrl: '', logoutUrl: '', userIdentifier: '', scopes: '', authStyle: OAuthStyle.AutoDetect },
 };
 
@@ -43,6 +53,10 @@ export function getProviderByUrl(providerAuthURL = '') {
 
   if (providerAuthURL.includes('github.com')) {
     return 'github';
+  }
+
+  if (providerAuthURL.includes('1crm.io/api/user/connect')) {
+    return 'onecrm';
   }
 
   return 'custom';

@@ -1,9 +1,15 @@
 <div class="page-wrapper dc-auth-page">
   <div class="dc-auth-shell">
-    <!-- Left: credentials (1CRM Fuse-style) -->
+    <!-- Left: credentials (account.1crm.io light chrome) -->
     <div class="dc-auth-panel">
       <div class="dc-auth-panel-inner">
-        <div class="dc-auth-mark" aria-hidden="true">1</div>
+        <img
+          class="dc-auth-logo"
+          src="~@/assets/images/logo/logo-text.svg"
+          width="184"
+          height="58"
+          alt="1CRM"
+        />
 
         <h1 class="dc-auth-title">Developer Console</h1>
         <p class="dc-auth-subtitle">Sign in with your 1CRM account</p>
@@ -22,6 +28,10 @@
               <a ng-href="{{ ctrl.OAuthLoginURI }}" class="dc-btn dc-btn-primary dc-auth-oauth-link" ng-if="ctrl.state.OAuthProvider === 'Github'">
                 <pr-icon icon="'svg-github'"></pr-icon>
                 Login with GitHub
+              </a>
+              <a ng-href="{{ ctrl.OAuthLoginURI }}" class="dc-btn dc-btn-primary dc-auth-oauth-link" ng-if="ctrl.state.OAuthProvider === '1CRM'" data-cy="auth-sso-1crm">
+                <pr-icon icon="'log-in'"></pr-icon>
+                Sign in with 1CRM
               </a>
               <a ng-href="{{ ctrl.OAuthLoginURI }}" class="dc-btn dc-btn-primary dc-auth-oauth-link" ng-if="ctrl.state.OAuthProvider === 'OAuth'">
                 <pr-icon icon="'log-in'"></pr-icon>
@@ -102,15 +112,21 @@
         </div>
 
         <div class="dc-auth-card dc-auth-progress" ng-show="ctrl.state.loginInProgress">
-          <span class="text-muted">Authentication in progress… <span button-spinner="true"></span></span>
+          <span>Authentication in progress… <span button-spinner="true"></span></span>
         </div>
       </div>
     </div>
 
-    <!-- Right: brand plane -->
+    <!-- Right: brand plane (slate-800 + splash accent washes) -->
     <div class="dc-auth-hero" aria-hidden="true">
       <div class="dc-auth-hero-inner">
-        <div class="dc-auth-hero-title">1CRM</div>
+        <img
+          class="dc-auth-hero-logo"
+          src="~@/assets/images/logo/logo-text-on-dark.svg"
+          width="256"
+          height="80"
+          alt=""
+        />
         <div class="dc-auth-hero-title">Developer Console</div>
         <p class="dc-auth-hero-copy">Единый центр управления контейнерами и стеками.</p>
       </div>

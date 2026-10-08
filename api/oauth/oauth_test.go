@@ -21,18 +21,45 @@ func Test_getOAuthToken(t *testing.T) {
 
 	t.Run("getOAuthToken fails upon invalid code", func(t *testing.T) {
 		code := ""
-		if _, err := GetOAuthToken(t.Context(), code, config); err == nil {
+		if _, err := GetOAuthToken(t.Context(), code, "", config); err == nil {
 			t.Errorf("getOAuthToken should fail upon providing invalid code; code=%v", code)
 		}
 	})
 
 	t.Run("getOAuthToken succeeds upon providing valid code", func(t *testing.T) {
 		code := validCode
-		token, err := GetOAuthToken(t.Context(), code, config)
+		token, err := GetOAuthToken(t.Context(), code, "", config)
 
 		if token == nil || err != nil {
 			t.Errorf("getOAuthToken should successfully return access token upon providing valid code")
 		}
+	})
+}
+
+func Test_getOAuthToken_PKCE(t *testing.T) {
+	t.Parallel()
+	validCode := "pkce-code"
+	verifier := oauth2.GenerateVerifier()
+	srv, config := oauthtest.RunOAuthServerWithPKCE(validCode, &portainer.OAuthSettings{}, verifier)
+	defer srv.Close()
+
+	t.Run("fails without code_verifier when IdP requires PKCE", func(t *testing.T) {
+		if _, err := GetOAuthToken(t.Context(), validCode, "", config); err == nil {
+			t.Error("getOAuthToken should fail when code_verifier is missing and IdP requires PKCE")
+		}
+	})
+
+	t.Run("fails with wrong code_verifier", func(t *testing.T) {
+		if _, err := GetOAuthToken(t.Context(), validCode, "wrong-verifier", config); err == nil {
+			t.Error("getOAuthToken should fail when code_verifier does not match")
+		}
+	})
+
+	t.Run("succeeds with matching code_verifier", func(t *testing.T) {
+		token, err := GetOAuthToken(t.Context(), validCode, verifier, config)
+		require.NoError(t, err)
+		require.NotNil(t, token)
+		assert.Equal(t, oauthtest.AccessToken, token.AccessToken)
 	})
 }
 
@@ -158,7 +185,7 @@ func Test_Authenticate(t *testing.T) {
 		srv, config := oauthtest.RunOAuthServer(code, &portainer.OAuthSettings{})
 		defer srv.Close()
 
-		if _, err := authService.Authenticate(t.Context(), code, config); err == nil {
+		if _, err := authService.Authenticate(t.Context(), code, "", config); err == nil {
 			t.Error("Authenticate should fail to extract username from resource if incorrect UserIdentifier provided")
 		}
 	})
@@ -168,7 +195,7 @@ func Test_Authenticate(t *testing.T) {
 		srv, config := oauthtest.RunOAuthServer(code, config)
 		defer srv.Close()
 
-		username, err := authService.Authenticate(t.Context(), code, config)
+		username, err := authService.Authenticate(t.Context(), code, "", config)
 		if err != nil {
 			t.Errorf("Authenticate should succeed to extract username from resource if correct UserIdentifier provided; UserIdentifier=%s", config.UserIdentifier)
 		}
@@ -179,4 +206,14 @@ func Test_Authenticate(t *testing.T) {
 		}
 	})
 
+	t.Run("should succeed with PKCE code_verifier", func(t *testing.T) {
+		verifier := oauth2.GenerateVerifier()
+		config := &portainer.OAuthSettings{UserIdentifier: "username"}
+		srv, config := oauthtest.RunOAuthServerWithPKCE(code, config, verifier)
+		defer srv.Close()
+
+		username, err := authService.Authenticate(t.Context(), code, verifier, config)
+		require.NoError(t, err)
+		assert.Equal(t, "test-oauth-user", username)
+	})
 }

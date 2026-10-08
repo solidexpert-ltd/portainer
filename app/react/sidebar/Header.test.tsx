@@ -19,10 +19,12 @@ function renderComponent(
 }
 
 describe('Header', () => {
-  it('should render 1CRM Developer Console brand when no custom logo', () => {
+  it('should render account logo mark and Developer Console when no custom logo', () => {
     renderComponent();
 
-    expect(screen.getByText('1CRM')).toBeInTheDocument();
+    const brand = screen.getByAltText('1CRM');
+    expect(brand).toBeInTheDocument();
+    expect(brand).toHaveAttribute('src', expect.stringContaining('logo-text-on-dark'));
     expect(screen.getByText('Developer Console')).toBeInTheDocument();
     expect(screen.queryByAltText('Logo')).not.toBeInTheDocument();
   });
@@ -47,7 +49,7 @@ describe('Header', () => {
   it('should hide Developer Console subtitle when sidebar is closed', () => {
     renderComponent({}, { isOpen: false, toggle: vi.fn() });
 
-    expect(screen.getByText('1CRM')).toBeInTheDocument();
+    expect(screen.getByAltText('1CRM')).toBeInTheDocument();
     expect(screen.queryByText('Developer Console')).not.toBeInTheDocument();
   });
 

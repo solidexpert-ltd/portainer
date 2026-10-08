@@ -28,13 +28,14 @@ func NewService() Service {
 }
 
 // Authenticate takes an access code and exchanges it for an access token from portainer OAuthSettings token environment(endpoint).
+// codeVerifier is the PKCE code_verifier bound to the authorize request (empty when the IdP does not require PKCE).
 // On success, it will then return the username and token expiry time associated to authenticated user by fetching this information
 // from the resource server and matching it with the user identifier setting.
-func (Service) Authenticate(ctx context.Context, code string, configuration *portainer.OAuthSettings) (string, error) {
+func (Service) Authenticate(ctx context.Context, code string, codeVerifier string, configuration *portainer.OAuthSettings) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	token, err := GetOAuthToken(ctx, code, configuration)
+	token, err := GetOAuthToken(ctx, code, codeVerifier, configuration)
 	if err != nil {
 		log.Error().Err(err).Msg("failed retrieving oauth token")
 
@@ -65,13 +66,17 @@ func (Service) Authenticate(ctx context.Context, code string, configuration *por
 	return username, nil
 }
 
-func GetOAuthToken(ctx context.Context, code string, configuration *portainer.OAuthSettings) (*oauth2.Token, error) {
+func GetOAuthToken(ctx context.Context, code string, codeVerifier string, configuration *portainer.OAuthSettings) (*oauth2.Token, error) {
 	unescapedCode, err := url.QueryUnescape(code)
 	if err != nil {
 		return nil, err
 	}
 
 	config := buildConfig(configuration)
+
+	if codeVerifier != "" {
+		return config.Exchange(ctx, unescapedCode, oauth2.VerifierOption(codeVerifier))
+	}
 
 	return config.Exchange(ctx, unescapedCode)
 }

@@ -4,6 +4,7 @@ import { getEnvironments } from '@/react/portainer/environments/environment.serv
 import { dispatchCacheRefreshEvent } from '@/portainer/services/http-request.helper';
 import { isSameDocumentUrl, isValidReturnUrl } from '@/portainer/helpers/url-utils';
 import { storeReturnUrl, getReturnUrl, cleanReturnUrl } from '@/react/portainer/helpers/returnUrl';
+import { generatePKCEPair } from '@/portainer/oauth/helpers/pkce';
 import './auth-onecrm.css';
 
 class AuthenticationController {
@@ -101,24 +102,40 @@ class AuthenticationController {
   }
 
   determineOauthProvider(LoginURI) {
+    if (!LoginURI) {
+      return 'OAuth';
+    }
     if (LoginURI.indexOf('login.microsoftonline.com') !== -1) {
       return 'Microsoft';
     } else if (LoginURI.indexOf('accounts.google.com') !== -1) {
       return 'Google';
     } else if (LoginURI.indexOf('github.com') !== -1) {
       return 'Github';
+    } else if (LoginURI.indexOf('1crm.io/api/user/connect') !== -1 || LoginURI.indexOf('account.1crm.io') !== -1) {
+      return '1CRM';
     }
     return 'OAuth';
   }
 
-  generateState() {
-    const uuid = uuidv4();
-    this.LocalStorage.storeLoginStateUUID(uuid);
-    return '&state=' + uuid;
-  }
+  async generateOAuthLoginURI() {
+    if (!this.state.OAuthLoginURI) {
+      this.OAuthLoginURI = '';
+      return;
+    }
 
-  generateOAuthLoginURI() {
-    this.OAuthLoginURI = this.state.OAuthLoginURI + this.generateState();
+    const state = uuidv4();
+    this.LocalStorage.storeLoginStateUUID(state);
+
+    const { verifier, challenge } = await generatePKCEPair();
+    this.LocalStorage.storePKCEVerifier(state, verifier);
+
+    this.OAuthLoginURI =
+      this.state.OAuthLoginURI +
+      '&state=' +
+      encodeURIComponent(state) +
+      '&code_challenge=' +
+      encodeURIComponent(challenge) +
+      '&code_challenge_method=S256';
   }
 
   hasValidState(state) {
@@ -191,9 +208,9 @@ class AuthenticationController {
    * LOGIN METHODS SECTION
    */
 
-  async oAuthLoginAsync(code) {
+  async oAuthLoginAsync(code, codeVerifier) {
     try {
-      await this.Authentication.OAuthLogin(code);
+      await this.Authentication.OAuthLogin(code, codeVerifier);
       this.URLHelper.cleanParameters();
     } catch (err) {
       this.error(err, 'Unable to login via OAuth');
@@ -238,7 +255,12 @@ class AuthenticationController {
    */
   async manageOauthCodeReturn(code, state) {
     if (this.hasValidState(state)) {
-      await this.oAuthLoginAsync(code);
+      const codeVerifier = this.LocalStorage.getPKCEVerifier(state);
+      if (!codeVerifier) {
+        this.error(null, 'Missing PKCE verifier, try signing in again.');
+        return;
+      }
+      await this.oAuthLoginAsync(code, codeVerifier);
     } else {
       this.error(null, 'Invalid OAuth state, try again.');
     }
@@ -276,14 +298,14 @@ class AuthenticationController {
       const state = this.URLHelper.getParameter('state');
       if (code && state) {
         await this.manageOauthCodeReturn(code, state);
-        this.generateOAuthLoginURI();
+        await this.generateOAuthLoginURI();
         return;
       }
       if (!this.logo) {
         await this.StateManager.initialize();
         this.logo = this.StateManager.getState().application.logo;
       }
-      this.generateOAuthLoginURI();
+      await this.generateOAuthLoginURI();
 
       if (this.$stateParams.logout || this.$stateParams.error) {
         this.logout(this.$stateParams.error);

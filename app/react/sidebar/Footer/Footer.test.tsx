@@ -43,6 +43,9 @@ describe('Footer', () => {
       renderComponent();
 
       expect(screen.getByText('1CRM Developer Console')).toBeInTheDocument();
+      expect(screen.getByTestId('portainerSidebar-footerBrand')).toHaveTextContent(
+        '1CRM Developer Console'
+      );
     });
 
     test('should render UpdateNotification component', () => {

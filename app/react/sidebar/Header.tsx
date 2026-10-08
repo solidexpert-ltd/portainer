@@ -2,6 +2,8 @@ import clsx from 'clsx';
 
 import { Link } from '@@/Link';
 
+import logoTextOnDark from '@/assets/images/logo/logo-text-on-dark.svg';
+
 import { useSidebarState } from './useSidebarState';
 import styles from './Header.module.css';
 
@@ -34,16 +36,15 @@ export function Header({ logo: customLogo }: Props) {
           />
         ) : (
           <span className="flex flex-col leading-tight">
-            <span
-              className={clsx(
-                'font-extrabold tracking-tight',
-                isOpen ? 'text-lg' : 'text-base'
-              )}
-            >
-              1CRM
-            </span>
+            <img
+              src={logoTextOnDark}
+              className={clsx(styles.brandMark, {
+                [styles.brandMarkCollapsed]: !isOpen,
+              })}
+              alt="1CRM"
+            />
             {isOpen && (
-              <span className="text-[11px] font-medium tracking-wide text-gray-5">
+              <span className="mt-1 text-[11px] font-medium tracking-wide text-gray-5">
                 Developer Console
               </span>
             )}

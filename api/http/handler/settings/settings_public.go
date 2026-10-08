@@ -3,6 +3,7 @@ package settings
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	portainer "github.com/portainer/portainer/api"
 	"github.com/portainer/portainer/pkg/featureflags"
@@ -87,19 +88,12 @@ func generatePublicSettings(appSettings *portainer.Settings) *publicSettingsResp
 
 	publicSettings.IsDockerDesktopExtension = appSettings.IsDockerDesktopExtension
 
-	// If OAuth authentication is on, compose the related fields from application settings
+	// If OAuth authentication is on, compose the related fields from application settings.
+	// PKCE code_challenge / code_challenge_method are appended client-side (bound to state + code_verifier)
+	// because the verifier must stay in the browser until /auth/oauth/validate.
 	if publicSettings.AuthenticationMethod == portainer.AuthenticationOAuth {
 		publicSettings.OAuthLogoutURI = appSettings.OAuthSettings.LogoutURI
-		publicSettings.OAuthLoginURI = fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&scope=%s",
-			appSettings.OAuthSettings.AuthorizationURI,
-			appSettings.OAuthSettings.ClientID,
-			appSettings.OAuthSettings.RedirectURI,
-			appSettings.OAuthSettings.Scopes)
-
-		// Control prompt=login param according to the SSO setting
-		if !appSettings.OAuthSettings.SSO {
-			publicSettings.OAuthLoginURI += "&prompt=login"
-		}
+		publicSettings.OAuthLoginURI = buildOAuthLoginURI(&appSettings.OAuthSettings)
 	}
 	// If LDAP authentication is on, compose the related fields from application settings
 	if publicSettings.AuthenticationMethod == portainer.AuthenticationLDAP && appSettings.LDAPSettings.GroupSearchSettings != nil {
@@ -109,4 +103,20 @@ func generatePublicSettings(appSettings *portainer.Settings) *publicSettingsResp
 	}
 
 	return publicSettings
+}
+
+// buildOAuthLoginURI composes the authorize URL without PKCE (challenge is added by the auth UI).
+func buildOAuthLoginURI(oauth *portainer.OAuthSettings) string {
+	loginURI := fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&scope=%s",
+		oauth.AuthorizationURI,
+		url.QueryEscape(oauth.ClientID),
+		url.QueryEscape(oauth.RedirectURI),
+		url.QueryEscape(oauth.Scopes))
+
+	// Control prompt=login param according to the SSO setting
+	if !oauth.SSO {
+		loginURI += "&prompt=login"
+	}
+
+	return loginURI
 }

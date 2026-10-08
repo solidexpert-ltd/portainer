@@ -1,8 +1,9 @@
-import { Edit } from 'lucide-react';
+import { Edit, KeyRound } from 'lucide-react';
 
 import Microsoft from '@/assets/ico/vendor/microsoft.svg?c';
 import Google from '@/assets/ico/vendor/google.svg?c';
 import Github from '@/assets/ico/vendor/github.svg?c';
+import { FeatureId } from '@/react/portainer/feature-flags/enums';
 
 export const options = [
   {
@@ -31,6 +32,14 @@ export const options = [
     value: 'github',
     iconType: 'logo',
     feature: FeatureId.HIDE_INTERNAL_AUTH,
+  },
+  {
+    id: 'onecrm',
+    icon: KeyRound,
+    iconType: 'badge',
+    label: '1CRM (account.1crm.io)',
+    description: '1CRM Developer Console via account.1crm.io / user-service',
+    value: 'onecrm',
   },
   {
     id: 'custom',

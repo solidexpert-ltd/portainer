@@ -2100,7 +2100,8 @@ type (
 
 	// OAuthService represents a service used to authenticate users using OAuth
 	OAuthService interface {
-		Authenticate(ctx context.Context, code string, configuration *OAuthSettings) (string, error)
+		// Authenticate exchanges an authorization code (and optional PKCE code_verifier) for a username.
+		Authenticate(ctx context.Context, code string, codeVerifier string, configuration *OAuthSettings) (string, error)
 	}
 
 	// ReverseTunnelService represents a service used to manage reverse tunnel connections.

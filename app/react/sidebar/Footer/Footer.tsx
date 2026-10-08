@@ -19,7 +19,7 @@ function CEFooter() {
 
       <FooterContent>
         <span>&copy;</span>
-        <span>1CRM Developer Console</span>
+        <span data-cy="portainerSidebar-footerBrand">1CRM Developer Console</span>
 
         <BuildInfoModalButton />
       </FooterContent>

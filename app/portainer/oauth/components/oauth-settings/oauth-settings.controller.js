@@ -54,7 +54,7 @@ export default class OAuthSettingsController {
 
     this.state.overrideConfiguration = false;
 
-    if (!this.isLimitedToBE || providerId === 'custom') {
+    if (!this.isLimitedToBE || providerId === 'custom' || providerId === 'onecrm') {
       this.settings.AuthorizationURI = provider.authUrl;
       this.settings.AccessTokenURI = provider.accessTokenUrl;
       this.settings.ResourceURI = provider.resourceUrl;
@@ -62,6 +62,11 @@ export default class OAuthSettingsController {
       this.settings.UserIdentifier = provider.userIdentifier;
       this.settings.Scopes = provider.scopes;
       this.settings.AuthStyle = provider.authStyle;
+
+      if (providerId === 'onecrm') {
+        this.settings.SSO = true;
+        this.settings.OAuthAutoCreateUsers = false;
+      }
 
       if (providerId === 'microsoft' && this.state.microsoftTenantID !== '') {
         this.onMicrosoftTenantIDChange();

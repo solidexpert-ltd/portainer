@@ -3,3 +3,19 @@
   max-height: 55px;
   max-width: min(100%, 220px);
 }
+
+.brandMark {
+  display: block;
+  height: auto;
+  max-height: 36px;
+  max-width: min(100%, 168px);
+  width: auto;
+}
+
+.brandMarkCollapsed {
+  max-height: 28px;
+  max-width: 36px;
+  /* diamond mark sits on the left of the wordmark viewBox */
+  object-fit: cover;
+  object-position: left center;
+}

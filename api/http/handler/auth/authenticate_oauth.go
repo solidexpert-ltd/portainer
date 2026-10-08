@@ -16,7 +16,9 @@ import (
 
 type oauthPayload struct {
 	// OAuth code returned from OAuth Provided
-	Code string
+	Code string `json:"code" example:"randomcode"`
+	// PKCE code_verifier generated for the authorize request (required when IdP enforces PKCE)
+	CodeVerifier string `json:"codeVerifier" example:"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"`
 }
 
 func (payload *oauthPayload) Validate(r *http.Request) error {
@@ -27,7 +29,7 @@ func (payload *oauthPayload) Validate(r *http.Request) error {
 	return nil
 }
 
-func (handler *Handler) authenticateOAuth(ctx context.Context, code string, settings *portainer.OAuthSettings) (string, error) {
+func (handler *Handler) authenticateOAuth(ctx context.Context, code string, codeVerifier string, settings *portainer.OAuthSettings) (string, error) {
 	if code == "" {
 		return "", errors.New("Invalid OAuth authorization code")
 	}
@@ -36,7 +38,7 @@ func (handler *Handler) authenticateOAuth(ctx context.Context, code string, sett
 		return "", errors.New("Invalid OAuth configuration")
 	}
 
-	username, err := handler.OAuthService.Authenticate(ctx, code, settings)
+	username, err := handler.OAuthService.Authenticate(ctx, code, codeVerifier, settings)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +78,7 @@ func (handler *Handler) validateOAuth(w http.ResponseWriter, r *http.Request) *h
 		return httperror.Forbidden("OAuth authentication is not enabled", errors.New("OAuth authentication is not enabled"))
 	}
 
-	username, err := handler.authenticateOAuth(r.Context(), payload.Code, &settings.OAuthSettings)
+	username, err := handler.authenticateOAuth(r.Context(), payload.Code, payload.CodeVerifier, &settings.OAuthSettings)
 	if err != nil {
 		log.Debug().Err(err).Msg("OAuth authentication error")
 

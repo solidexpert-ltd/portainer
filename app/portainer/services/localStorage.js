@@ -8,6 +8,19 @@ angular.module('portainer.app').factory('LocalStorage', [
       getLoginStateUUID: function () {
         return localStorageService.get('LOGIN_STATE_UUID');
       },
+      storePKCEVerifier: function (state, verifier) {
+        localStorageService.set('OAUTH_PKCE_VERIFIER', { state, verifier });
+      },
+      getPKCEVerifier: function (state) {
+        const stored = localStorageService.get('OAUTH_PKCE_VERIFIER');
+        if (!stored || !state || stored.state !== state) {
+          return null;
+        }
+        return stored.verifier;
+      },
+      cleanPKCEVerifier: function () {
+        localStorageService.remove('OAUTH_PKCE_VERIFIER');
+      },
       storeEndpointState: function (state) {
         localStorageService.set('ENDPOINT_STATE', state);
       },
@@ -119,7 +132,7 @@ angular.module('portainer.app').factory('LocalStorage', [
         localStorageService.clearAll();
       },
       cleanAuthData() {
-        localStorageService.remove('USER_ID', 'APPLICATION_STATE', 'LOGIN_STATE_UUID', 'ALLOWED_NAMESPACES');
+        localStorageService.remove('USER_ID', 'APPLICATION_STATE', 'LOGIN_STATE_UUID', 'OAUTH_PKCE_VERIFIER', 'ALLOWED_NAMESPACES');
       },
       storeKubernetesSummaryToggle(value) {
         localStorageService.set('kubernetes_summary_expanded', value);

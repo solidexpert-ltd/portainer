@@ -192,7 +192,10 @@ func (handler *Handler) updateSettings(tx dataservices.DataStoreTx, payload sett
 
 	if payload.OAuthSettings != nil {
 		clientSecret := payload.OAuthSettings.ClientSecret
-		if clientSecret == "" {
+		// "-" clears a stored secret (empty string still means "keep previous" for UI forms).
+		if clientSecret == "-" {
+			clientSecret = ""
+		} else if clientSecret == "" {
 			clientSecret = settings.OAuthSettings.ClientSecret
 		}
 

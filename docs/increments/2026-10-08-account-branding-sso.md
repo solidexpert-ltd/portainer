@@ -5,7 +5,7 @@
 **Spec:**
 - `docs/features/developer-console-branding/SPEC.md`
 - `docs/features/account-sso/SPEC.md`
-**CI:** _(filled after push)_
-**Image:** _(filled after CI)_
-**Prod swap:** _(filled after swap)_
+**CI:** `solidexpert-ltd/portainer` run `#10` https://github.com/solidexpert-ltd/portainer/actions/runs/37708174645
+**Image:** `solidexpert/portainer-ce:10` (also `:2.45.1`, `:latest`)
+**Prod swap:** `portainer` (backup `portainer-old8`)
 **Перезалить:** `portainer` (standalone / `portainer/portainer-ce.stack.yml`)

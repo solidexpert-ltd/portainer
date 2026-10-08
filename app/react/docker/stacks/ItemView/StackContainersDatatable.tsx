@@ -1,7 +1,11 @@
+import { useEffect } from 'react';
 import { Box } from 'lucide-react';
 
 import { ContainerListViewModel } from '@/react/docker/containers/types';
-import { createStore } from '@/react/docker/containers/ListView/ContainersDatatable/datatable-store';
+import {
+  createStore,
+  hideNewMetricColumnsOnce,
+} from '@/react/docker/containers/ListView/ContainersDatatable/datatable-store';
 import { useColumns } from '@/react/docker/containers/ListView/ContainersDatatable/columns';
 import { ContainersDatatableActions } from '@/react/docker/containers/ListView/ContainersDatatable/ContainersDatatableActions';
 import { ContainersDatatableSettings } from '@/react/docker/containers/ListView/ContainersDatatable/ContainersDatatableSettings';
@@ -25,6 +29,7 @@ import { RowProvider } from '../../containers/ListView/ContainersDatatable/RowCo
 import { useComposeStackContainers } from './useComposeStackContainers';
 
 const storageKey = 'stack-containers';
+const metricsColumnIds = ['cpu', 'memory', 'blockIO'];
 const settingsStore = createStore(storageKey);
 
 const actions = [
@@ -45,6 +50,17 @@ export function StackContainersDatatable({ stackName }: Props) {
 
   const isGPUsColumnVisible = useShowGPUsColumn(environmentQuery.data);
   const columns = useColumns(false, isGPUsColumnVisible);
+  const isMetricsEnabled = !metricsColumnIds.every((id) =>
+    tableState.hiddenColumns.includes(id)
+  );
+
+  useEffect(() => {
+    hideNewMetricColumnsOnce(
+      storageKey,
+      tableState.hiddenColumns,
+      tableState.setHiddenColumns
+    );
+  }, [tableState.hiddenColumns, tableState.setHiddenColumns]);
 
   const containersQuery = useComposeStackContainers(
     { environmentId: environmentQuery.data?.Id, stackName },
@@ -60,7 +76,7 @@ export function StackContainersDatatable({ stackName }: Props) {
   const environment = environmentQuery.data;
 
   return (
-    <RowProvider context={{ environment }}>
+    <RowProvider context={{ environment, isMetricsEnabled }}>
       <TableSettingsProvider settings={settingsStore}>
         <Datatable
           title="Containers"

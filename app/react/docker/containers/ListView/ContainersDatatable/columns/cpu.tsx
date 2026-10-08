@@ -28,9 +28,14 @@ function CpuCell({
     return null;
   }
 
-  if (!metricsQuery.data.cpuAvailable) {
+  const { cpuAvailable, cpuPercent } = metricsQuery.data;
+  if (
+    !cpuAvailable ||
+    typeof cpuPercent !== 'number' ||
+    !Number.isFinite(cpuPercent)
+  ) {
     return <>Not Available</>;
   }
 
-  return <>{metricsQuery.data.cpuPercent.toFixed(2)}%</>;
+  return <>{cpuPercent.toFixed(2)}%</>;
 }

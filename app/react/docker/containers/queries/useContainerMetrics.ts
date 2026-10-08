@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { EnvironmentId } from '@/react/portainer/environments/types';
 import axios, { parseAxiosError } from '@/portainer/services/axios/axios';
-import { withGlobalError } from '@/react-tools/react-query';
+import { withError } from '@/react-tools/react-query';
 
 import { queryKeys as dockerQueryKeys } from '../../queries/utils';
 
@@ -55,10 +55,13 @@ export function useContainerMetricById(
     metricsQueryKeys.containers(environmentId),
     () => getContainerMetrics(environmentId),
     {
-      ...withGlobalError('Unable to retrieve container metrics'),
+      ...withError('Unable to retrieve container metrics'),
       refetchInterval: enabled ? METRICS_REFETCH_INTERVAL_MS : false,
       enabled,
-      select: (data) => data.find((m) => m.containerId === containerId),
+      select: (data) =>
+        Array.isArray(data)
+          ? data.find((m) => m.containerId === containerId)
+          : undefined,
     }
   );
 }

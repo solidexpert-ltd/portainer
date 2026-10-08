@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Box } from 'lucide-react';
 
 import { ContainerListViewModel } from '@/react/docker/containers/types';
@@ -24,7 +25,7 @@ import { ContainersDatatableActions } from './ContainersDatatableActions';
 import { ContainersDatatableSettings } from './ContainersDatatableSettings';
 import { RowProvider } from './RowContext';
 import { useColumns } from './columns';
-import { createStore } from './datatable-store';
+import { createStore, hideNewMetricColumnsOnce } from './datatable-store';
 
 const storageKey = 'containers';
 const settingsStore = createStore(storageKey);
@@ -58,6 +59,14 @@ export function ContainersDatatable({
   const isMetricsEnabled = !metricsColumnIds.every((id) =>
     tableState.hiddenColumns.includes(id)
   );
+
+  useEffect(() => {
+    hideNewMetricColumnsOnce(
+      storageKey,
+      tableState.hiddenColumns,
+      tableState.setHiddenColumns
+    );
+  }, [tableState.hiddenColumns, tableState.setHiddenColumns]);
 
   return (
     <RowProvider context={{ environment, isMetricsEnabled }}>

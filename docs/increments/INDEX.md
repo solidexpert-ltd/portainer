@@ -1,5 +1,6 @@
 # Increments
 
+- [2026-10-08 — SSO claim fallbacks + live cutover](2026-10-08-sso-claim-fallbacks-cutover.md)
 - [2026-10-08 — SSO live cutover](2026-10-08-sso-live-cutover.md)
 - [2026-10-08 â€” Stack details metrics crash](2026-10-08-stack-details-metrics-crash.md)
 - [2026-10-08 â€” Account branding + SSO (PKCE)](2026-10-08-account-branding-sso.md)

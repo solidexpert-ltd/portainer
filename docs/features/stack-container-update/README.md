@@ -6,6 +6,7 @@
 ## Code
 
 - `api/http/handler/stacks/stack_container_image.go` — token, lookup, pull, file write, compose up
+- `api/docker/client/client.go` — `DefaultDockerRequestTimeout` (10 minutes) for Docker calls that do not pass a timeout, including this route's image pull
 - `api/http/handler/stacks/handler.go` — `POST /stacks/container-image` registered before `/stacks/{id}`
 - `api/stacks/stackutils/image_tag.go` — line edit of one `image:` scalar
 - `pkg/libstack/compose/composeplugin.go` — one-service up drops dependencies and does not recreate siblings

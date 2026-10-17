@@ -1,5 +1,6 @@
 # Increments
 
+- [2026-10-17 — Docker image-pull timeout](2026-10-17-docker-pull-timeout.md)
 - [2026-10-08 — Single-service stack image update](2026-10-08-stack-container-update.md)
 - [2026-10-08 — SSO claim fallbacks + live cutover](2026-10-08-sso-claim-fallbacks-cutover.md)
 - [2026-10-08 — SSO live cutover](2026-10-08-sso-live-cutover.md)

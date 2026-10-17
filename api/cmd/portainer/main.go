@@ -698,6 +698,7 @@ func main() {
 			Str("version", portainer.APIVersion).
 			Str("build_number", build.BuildNumber).
 			Str("image_tag", build.ImageTag).
+			Str("docker_request_timeout", dockerclient.DefaultDockerRequestTimeout.String()).
 			Str("nodejs_version", build.NodejsVersion).
 			Str("pnpm_version", build.PnpmVersion).
 			Str("webpack_version", build.WebpackVersion).

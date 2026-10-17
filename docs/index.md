@@ -4,6 +4,7 @@ Hub for the forked Portainer CE used as **1CRM Developer Console**.
 
 ## Latest increments
 
+- [2026-10-17 — Docker image-pull timeout](increments/2026-10-17-docker-pull-timeout.md)
 - [2026-10-08 — Single-service stack image update](increments/2026-10-08-stack-container-update.md)
 - [2026-10-08 — Stack details metrics crash](increments/2026-10-08-stack-details-metrics-crash.md)
 - [2026-10-08 — Account branding + SSO (PKCE)](increments/2026-10-08-account-branding-sso.md)

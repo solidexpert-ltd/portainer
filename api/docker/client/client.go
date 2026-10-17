@@ -24,7 +24,9 @@ import (
 var errUnsupportedEnvironmentType = errors.New("environment not supported")
 
 const (
-	defaultDockerRequestTimeout = 60 * time.Second
+	// DefaultDockerRequestTimeout bounds Docker API calls that do not pass their own timeout.
+	// Image pulls stream the whole pull inside this deadline. Callers such as stack deploy pass a longer timeout.
+	DefaultDockerRequestTimeout = 10 * time.Minute
 	dockerClientVersion         = "1.37"
 )
 
@@ -215,7 +217,7 @@ func httpClient(endpoint *portainer.Endpoint, timeout *time.Duration) (*http.Cli
 		transport = &NodeNameTransport{Transport: ssrf.NewTransport(nil)}
 	}
 
-	clientTimeout := defaultDockerRequestTimeout
+	clientTimeout := DefaultDockerRequestTimeout
 	if timeout != nil {
 		clientTimeout = *timeout
 	}

@@ -1,9 +1,9 @@
 # Increments
 
-- [2026-10-17 — Docker image-pull timeout](2026-10-17-docker-pull-timeout.md)
-- [2026-10-08 — Single-service stack image update](2026-10-08-stack-container-update.md)
-- [2026-10-08 — SSO claim fallbacks + live cutover](2026-10-08-sso-claim-fallbacks-cutover.md)
-- [2026-10-08 — SSO live cutover](2026-10-08-sso-live-cutover.md)
+- [2026-10-17 ï¿½ Docker image-pull timeout](2026-10-17-docker-pull-timeout.md)
+- [2026-10-08 ï¿½ Single-service stack image update](2026-10-08-stack-container-update.md)
+- [2026-10-08 ï¿½ SSO claim fallbacks + live cutover](2026-10-08-sso-claim-fallbacks-cutover.md)
+- [2026-10-08 ï¿½ SSO live cutover](2026-10-08-sso-live-cutover.md)
 - [2026-10-08 â€” Stack details metrics crash](2026-10-08-stack-details-metrics-crash.md)
 - [2026-10-08 â€” Account branding + SSO (PKCE)](2026-10-08-account-branding-sso.md)
 - [2026-10-07 â€” Login bootstrap fix](2026-10-07-login-bootstrap-fix.md)
